@@ -1,0 +1,345 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Content Refresh Opportunity Model</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 20px;
+    line-height: 1.7;
+}
+h1 { line-height: 1.2; }
+h2 {
+    margin-top: 45px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 8px;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 20px 0;
+}
+th, td {
+    border: 1px solid #ddd;
+    padding: 9px;
+    text-align: left;
+}
+th { background: #f3f3f3; }
+.note {
+    background: #f6f6f6;
+    padding: 15px;
+    border-left: 4px solid #555;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Content Refresh Opportunity Model</h1>
+
+<h2>Abstract</h2>
+<p>
+This research asks which existing content pages should be reviewed first
+when search visibility is present but performance may be declining.
+The analysis uses an anonymized starter dataset containing 30,000 content
+pages and observed search and content-performance signals. A ranking-oriented
+workflow was developed and evaluated using a client-holdout validation split,
+with a fixed-rule baseline used for comparison. The random forest model
+achieved Precision@50 of 0.740 compared with 0.240 for the baseline rules
+on the same validation setup. The result is intended as decision support
+for prioritizing human content review, not as proof that a recommended
+change will cause higher search performance.
+</p>
+
+<h2>Introduction / Problem Statement</h2>
+<p>
+Content teams cannot manually review every page with the same level of
+attention. The practical question is therefore how to prioritize pages
+that show observed signals of a possible refresh opportunity.
+</p>
+
+<p>
+The research question is: <strong>Which pages should be reviewed first
+because they have high visibility but lower CTR or weak engagement?</strong>
+The intended user of the output is a content reviewer or SEO specialist.
+A wrong recommendation can waste review time, while missing a genuine
+opportunity can delay a potentially useful content improvement.
+</p>
+
+<h2>Data</h2>
+<p>
+The initial lane used an anonymized starter dataset containing
+<strong>30,000 content pages and 44 columns</strong>. The fields include
+observed search and content signals such as search volume, competition,
+CTR, average position, engagement rate, scroll rate, impressions,
+content characteristics, and trend direction.
+</p>
+
+<p>
+The model report records 30,000 rows scored and 16,262 rows carrying the
+declining label, corresponding to a declining-label rate of 0.542.
+The modeling workflow uses pseudonymized content identifiers rather than
+client names, URLs, domains, or private search queries.
+</p>
+
+<div class="note">
+<strong>Public-safe framing:</strong> the paper reports aggregate,
+anonymized measurements and does not expose client identities, URLs,
+domains, or private queries.
+</div>
+
+<h2>Methodology</h2>
+<p>
+The task is treated as an opportunity-ranking problem. Each content item
+is scored so that reviewers can inspect higher-priority items first.
+The workflow combines multiple observed signals rather than relying on
+one fixed threshold.
+</p>
+
+<p>
+The evaluated models were decision tree, logistic regression, and random
+forest. A fixed-rule baseline was also evaluated. The primary selection
+metric was Precision@50 because the practical use case is to put valuable
+review opportunities near the top of a limited review queue.
+</p>
+
+<p>
+Validation used a <strong>client-holdout</strong> split. This helps test
+whether the ranking remains useful when evaluated on clients that were
+held out from model fitting. Leakage checks and signal audits were used
+to avoid treating future or inappropriate information as evidence for
+the decision.
+</p>
+
+<h2>Results vs Baseline</h2>
+
+<p>
+The models were compared on the same validation setup. The random forest
+was selected using Precision@50.
+</p>
+
+<table>
+<tr>
+<th>Model</th>
+<th>ROC AUC</th>
+<th>Average Precision</th>
+<th>Precision@50</th>
+<th>Recall</th>
+<th>F1</th>
+</tr>
+
+<tr>
+<td>Decision Tree</td>
+<td>0.742</td>
+<td>0.575</td>
+<td>0.540</td>
+<td>0.716</td>
+<td>0.634</td>
+</tr>
+
+<tr>
+<td>Logistic Regression</td>
+<td>0.700</td>
+<td>0.522</td>
+<td>0.400</td>
+<td>0.567</td>
+<td>0.566</td>
+</tr>
+
+<tr>
+<td><strong>Random Forest</strong></td>
+<td><strong>0.750</strong></td>
+<td><strong>0.618</strong></td>
+<td><strong>0.740</strong></td>
+<td><strong>0.744</strong></td>
+<td><strong>0.640</strong></td>
+</tr>
+
+<tr>
+<td>Baseline Rules</td>
+<td>0.627</td>
+<td>0.468</td>
+<td>0.240</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</table>
+
+<p>
+The observed Precision@50 increased from 0.240 for the baseline rules
+to 0.740 for the random forest. In this validation setup, that means
+37 of the top 50 ranked items were labeled as declining opportunities,
+compared with 12 of the top 50 under the baseline rule.
+</p>
+
+
+<h3>Model Comparison</h3>
+
+<p>
+The main result is the difference between the learned model and the
+fixed-rule baseline on the same validation setup.
+</p>
+
+<img src="../outputs/charts/top_feature_importance.svg"
+     alt="Top feature importance"
+     style="max-width:100%; height:auto;">
+
+<p><strong>Takeaway:</strong> the model uses several observed signals together,
+rather than relying on a single threshold.</p>
+
+<h3>Ranked Queue Signals</h3>
+
+<img src="../outputs/charts/top_reason_codes.svg"
+     alt="Top reason codes"
+     style="max-width:100%; height:auto;">
+
+<p><strong>Takeaway:</strong> the ranked queue combines multiple reason codes
+to explain why an item was prioritized for review.</p>
+
+<h3>Recommended Actions</h3>
+
+<img src="../outputs/charts/action_mix.svg"
+     alt="Action mix"
+     style="max-width:100%; height:auto;">
+
+<p><strong>Takeaway:</strong> the output is divided into practical review
+actions rather than producing an automatic publishing decision.</p>
+
+<h3>Confidence Distribution</h3>
+
+<img src="../outputs/charts/confidence_mix.svg"
+     alt="Confidence mix"
+     style="max-width:100%; height:auto;">
+
+<p><strong>Takeaway:</strong> confidence levels help reviewers decide where
+to start and where additional manual checking is especially important.</p>
+
+<h3>Trend Distribution</h3>
+
+<img src="../outputs/charts/trend_distribution.svg"
+     alt="Trend distribution"
+     style="max-width:100%; height:auto;">
+
+<p><strong>Takeaway:</strong> trend direction is treated as supporting evidence,
+not as proof that a content change will improve performance.</p>
+
+<h2>Limitations &amp; Honest Framing</h2>
+<p>
+These results are directional and should be treated as decision support.
+The analysis does not prove that refreshing a page will increase clicks,
+CTR, rankings, engagement, or traffic.
+</p>
+
+<p>
+The validation design reduces some leakage risk through client holdout,
+but it does not turn the analysis into a causal experiment. The label is
+based on observed data and therefore reflects the limitations of the
+underlying measurements. Model importance should also not be interpreted
+as proof that changing a particular feature will cause the outcome.
+</p>
+
+<p>
+The final queue should therefore be reviewed by a person before any
+content change is made.
+</p>
+
+<h2>Ranked Recommendations</h2>
+
+<ol>
+<li>
+<strong>Review high-confidence pages first.</strong>
+Start with the highest-ranked items because the model is designed to
+concentrate likely review opportunities near the top of the queue.
+</li>
+
+<li>
+<strong>Prioritize visible pages with CTR concerns.</strong>
+Pages with meaningful search visibility and a comparatively weak CTR
+are useful candidates for title and meta-description review.
+</li>
+
+<li>
+<strong>Check engagement signals before editing content.</strong>
+Where the queue indicates weak engagement, inspect the page experience
+and content usefulness before deciding on a refresh.
+</li>
+
+<li>
+<strong>Use trend direction as supporting evidence.</strong>
+A declining trend can increase review priority, but it should not be
+treated as proof that a refresh will reverse the trend.
+</li>
+
+<li>
+<strong>Keep humans in the decision loop.</strong>
+The queue is a reviewer aid. It should not automatically publish,
+rewrite, delete, or replace content.
+</li>
+</ol>
+
+<h2>Reproducibility</h2>
+<p>
+The analysis is organized in the repository under
+<code>work/notebooks/</code>. The capstone notebook documents the paper
+sections, while the Week 1–7 notebooks contain the research question,
+ML framing, data contract, leakage checks, baseline, model, validation
+audit, signal audit, and action playbook work.
+</p>
+
+<p>
+The reported model comparison and queue outputs are also represented in
+the repository's generated model report and chart artifacts. The paper
+is intended to be reproducible from the public repository without
+exposing private client information.
+</p>
+
+
+<h2>ML-12 Closing Materials</h2>
+
+<h3>5-Minute Demo Outline</h3>
+<ol>
+<li><strong>Question:</strong> explain how the workflow ranks content pages for refresh review.</li>
+<li><strong>Data:</strong> describe the 30,000-page anonymized starter dataset and the observed search/content signals.</li>
+<li><strong>Method:</strong> explain the ranking workflow, client-holdout validation, and baseline comparison.</li>
+<li><strong>Result:</strong> show that Random Forest measured 0.740 Precision@50 versus 0.240 for the baseline.</li>
+<li><strong>Use:</strong> demonstrate the ranked queue and explain why human review remains required.</li>
+</ol>
+
+<h3>Social-Post Cut</h3>
+<p>
+I built a content-refresh opportunity model using 30,000 anonymized content
+pages and observed search-performance signals. On the same client-holdout
+validation setup, the Random Forest measured 0.740 Precision@50 versus 0.240
+for the fixed-rule baseline. The output is a reviewer aid for prioritizing
+content checks, not an automatic publishing decision.
+</p>
+
+<h3>Employer-Facing Summary</h3>
+<p>
+I built and validated a machine-learning workflow that ranks content pages
+for refresh review using observed search and content-performance signals.
+The work used 30,000 anonymized pages and compared multiple models against a
+fixed-rule baseline using a client-holdout validation design. The selected
+Random Forest measured 0.740 Precision@50 versus 0.240 for the baseline,
+while keeping human review in the decision loop.
+</p>
+
+<h2>Acknowledgments &amp; Data Credit</h2>
+<p>
+Built on the FlyRank ML Internship dataset.
+</p>
+
+<p>
+<a href="https://flyrank.ai" target="_blank" rel="noopener">
+FlyRank
+</a>
+</p>
+
+</body>
+</html>
